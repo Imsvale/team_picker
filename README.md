@@ -3,6 +3,10 @@ Input team stats (you may need to adjust the input parser) and get an ideal team
 
 ## To use:
 
+Download from here: https://github.com/arkadye/team_picker/blob/main/team_picker.zip
+
+OR
+
 Get yourself a C++ compiler. This was written with Visual Studio Community Edition 2022 so I know for sure that works.
 
 Compile main.cpp.
