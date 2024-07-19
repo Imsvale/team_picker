@@ -633,12 +633,31 @@ std::vector<RosterPosition> pick_team(const std::vector<Player>& roster, const P
 
 int main()
 {
+	auto quit = []()
+		{
+			std::cout << "Press 'Enter' to quit.";
+			std::cin.get();
+			exit(0);
+		};
+	std::cout << "Loading team_data.txt\n";
 	std::ifstream team_input{ "team_data.txt" };
+	if (!team_input.is_open())
+	{
+		std::cout << "Could not open team_data.txt\n";
+		quit();
+	}
 	const std::vector<Player> roster = get_roster(team_input);
 
+	std::cout << "Loading composition.txt\n";
 	std::ifstream req_input{ "composition.txt" };
+	if (!req_input.is_open())
+	{
+		std::cout << "Could not open composition.txt\n";
+		quit();
+	}
 	PositionRequirements requirements = parse_position_requirements(req_input);
 
+	std::cout << "Picking the team...\n";
 	std::vector<RosterPosition> picks = pick_team(roster, requirements);
 	for (const RosterPosition& pick : picks)
 	{
@@ -650,5 +669,5 @@ int main()
 		}
 		std::cout << '\n';
 	}
-	return 0;
+	quit();
 }
