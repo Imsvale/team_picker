@@ -1,0 +1,11 @@
+# A basic one for FFFL: Brutalball Manager
+
+Offence: RN RN RN GN GN BK BK BK
+Defence: DL DL DL CV CV LB LB LB
+
+RN=max(HB,QB) + OVR
+GN=GN + OVR
+BK=BK + OVR
+DL=DL+ OVR
+CV=CV + OVR
+LB=LB + OVR
