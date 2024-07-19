@@ -3,7 +3,7 @@ Input team stats (you may need to adjust the input parser) and get an ideal team
 
 ## To use:
 
-Download from here: https://github.com/arkadye/team_picker/blob/main/team_picker.zip
+Download from here: https://github.com/arkadye/team_picker/releases
 
 OR
 
