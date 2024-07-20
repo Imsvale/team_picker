@@ -33,6 +33,8 @@ The parser converts this format:
     
 and so on. The first line gives a list of stats to collect. Each player is then two lines: the first is a shirt number (ignored) and a name (assigned to `name`). The second line is metadata which is ignored - it will be parsed until it finds  a number - and then the values are assigned to the stats. So `Joe Bloggs` ends up with `Stat1=111` `Stat2=222` and `Jane Doe` ends up with `Stat1=333` `Stat2=444`. The name and number of stats can be set arbitrarily.
 
+**KNOWN BUG:** Empty lines in `team_data.txt` cause the parser to hang. 
+
 If you want a different format you'll have to edit/rewrite the `get_player()` function  and maybe the `read_header()` function too. 
 
 ## composition.txt
