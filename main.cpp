@@ -60,6 +60,7 @@ Player get_player(std::istream& is, const std::vector<std::string>& stats)
 	is >> std::ws;
 	std::getline(is, result.name);
 	std::string stats_str;
+	
 	std::getline(is, stats_str);
 	std::istringstream stats_data{ stats_str };
 	while (!std::isdigit(stats_data.peek()))
@@ -87,11 +88,29 @@ Player get_player(std::istream& is, const std::vector<std::string>& stats)
 
 std::vector<Player> get_roster(std::istream& input)
 {
-	std::vector<Player> result;
-	const std::vector<std::string> header = read_header(input);
+	std::stringstream preprocessed;
+
+	bool first = true;
+
+	// Remove blank lines
 	while (!input.eof())
 	{
-		Player new_player = get_player(input, header);
+		std::string line;
+		std::getline(input, line);
+		if (!(line.empty() || std::ranges::all_of(line, ::isspace)))
+		{
+			preprocessed << (first ? "" : "\n") << line;
+			first = false;
+		}
+	}
+
+	preprocessed.seekg(0);
+
+	std::vector<Player> result;
+	const std::vector<std::string> header = read_header(preprocessed);
+	while (!preprocessed.eof())
+	{
+		Player new_player = get_player(preprocessed, header);
 		result.push_back(std::move(new_player));
 	}
 	return result;
