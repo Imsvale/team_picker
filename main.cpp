@@ -83,6 +83,7 @@ Player get_player(std::istream& is, const std::vector<std::string>& stats)
 		stats_data >> stat;
 		result.stats.insert(std::pair{ stat_name, stat });
 	}
+	std::cout << "    Read in player " << result.name << '\n';
 	return result;
 }
 
@@ -439,6 +440,7 @@ PickTempData to_pick_data(const Player& p, const PositionRequirements& requireme
 	add_scores(requirements.attacking, max_offence);
 	add_scores(requirements.defensive, max_defence);
 	r.max_score = max_offence + max_defence;
+	std::cout << "    Evaluating " << r.name << '\n';
 	return r;
 }
 
@@ -510,6 +512,7 @@ std::pair<std::vector<std::pair<std::string_view, PositionDescription>>, double>
 
 std::pair<std::vector<StartingPositionDescription>,double> get_initial_try_starters(const std::vector<PickTempData>& data, const PositionRequirements& requirements)
 {
+	std::cout << "Picking initial starting line up...\n";
 	const std::size_t target_size = requirements.attacking.size();
 	assert(requirements.defensive.size() == target_size);
 	assert(data.size() >= target_size);
@@ -585,6 +588,13 @@ std::pair<std::vector<StartingPositionDescription>, bool> try_swapping_in_player
 		{
 			best_improvement = picks;
 			best_delta = change_delta;
+			for (StartingPositionDescription& pick : best_improvement)
+			{
+				auto find_it = std::ranges::find(new_positions, pick.name, [](const auto& d) {return d.first; });
+				assert(find_it != end(new_positions));
+				pick.defence = find_it->second;
+				pick.score = pick.offence.score + pick.defence.score;
+			}
 		}
 
 		data_copy[i] = backup_ptd;
@@ -617,14 +627,17 @@ std::vector<RosterPosition> pick_team(const std::vector<Player>& roster, const P
 	auto [starters, best_score] = get_initial_try_starters(pick_data, requirements);
 
 	bool has_made_change = true;
+	int changes_tried = 0;
 	while (has_made_change)
 	{
 		has_made_change = false;
 		for (const PickTempData& trial_player : pick_data)
 		{
+			std::cout << changes_tried++ << ": trying " << trial_player.name << " as a starter\n";
 			auto [new_starters, change_made] = try_swapping_in_player(starters, pick_data, requirements, trial_player);
 			if (change_made)
 			{
+				std::cout << "    Swap made. Restarting.\n";
 				const double new_score = std::transform_reduce(begin(new_starters), end(new_starters), 0.0, std::plus<double>{},
 					[](const StartingPositionDescription& spd) {return spd.score; });
 				assert(new_score > best_score);
@@ -659,7 +672,7 @@ int main()
 			exit(0);
 		};
 	std::cout << "Loading team_data.txt\n";
-	std::ifstream team_input{ "team_data.txt" };
+	std::ifstream team_input{ "team_data_test.txt" };
 	if (!team_input.is_open())
 	{
 		std::cout << "Could not open team_data.txt\n";
@@ -668,7 +681,7 @@ int main()
 	const std::vector<Player> roster = get_roster(team_input);
 
 	std::cout << "Loading composition.txt\n";
-	std::ifstream req_input{ "composition.txt" };
+	std::ifstream req_input{ "composition_test.txt" };
 	if (!req_input.is_open())
 	{
 		std::cout << "Could not open composition.txt\n";
@@ -678,6 +691,7 @@ int main()
 
 	std::cout << "Picking the team...\n";
 	std::vector<RosterPosition> picks = pick_team(roster, requirements);
+	std::cout << "\nTEAM PICKED:\n";
 	for (const RosterPosition& pick : picks)
 	{
 		std::cout << pick.name << " | " << pick.offence << '/' << pick.defence;
