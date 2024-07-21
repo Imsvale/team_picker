@@ -672,7 +672,7 @@ int main()
 			exit(0);
 		};
 	std::cout << "Loading team_data.txt\n";
-	std::ifstream team_input{ "team_data_test.txt" };
+	std::ifstream team_input{ "team_data.txt" };
 	if (!team_input.is_open())
 	{
 		std::cout << "Could not open team_data.txt\n";
@@ -681,7 +681,7 @@ int main()
 	const std::vector<Player> roster = get_roster(team_input);
 
 	std::cout << "Loading composition.txt\n";
-	std::ifstream req_input{ "composition_test.txt" };
+	std::ifstream req_input{ "composition.txt" };
 	if (!req_input.is_open())
 	{
 		std::cout << "Could not open composition.txt\n";
