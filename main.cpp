@@ -12,6 +12,7 @@
 #include <limits>
 #include <numeric>
 #include <array>
+#include <format>
 
 using IST = std::istream_iterator<std::string>;
 
@@ -83,7 +84,7 @@ Player get_player(std::istream& is, const std::vector<std::string>& stats)
 		stats_data >> stat;
 		result.stats.insert(std::pair{ stat_name, stat });
 	}
-	std::cout << "    Read in player " << result.name << '\n';
+	std::cout << std::format("    Read in player {}\n", result.name);
 	return result;
 }
 
@@ -410,6 +411,9 @@ double evaluate_player(const Player& player, const std::string& position, const 
 struct RosterPosition
 {
 	std::string name, offence, defence;
+	double offensive_score = 0.0;
+	double defensive_score = 0.0;
+	double total_score = 0.0;
 };
 
 struct PickTempData
@@ -440,7 +444,7 @@ PickTempData to_pick_data(const Player& p, const PositionRequirements& requireme
 	add_scores(requirements.attacking, max_offence);
 	add_scores(requirements.defensive, max_defence);
 	r.max_score = max_offence + max_defence;
-	std::cout << "    Evaluating " << r.name << '\n';
+	std::cout << std::format("    Evaluating {}\n", r.name);
 	return r;
 }
 
@@ -569,6 +573,7 @@ std::pair<std::vector<StartingPositionDescription>, bool> try_swapping_in_player
 		[&get_pick_data](const StartingPositionDescription& spd) {return get_pick_data(spd.name); });
 
 	std::vector<StartingPositionDescription> best_improvement;
+	std::string_view swapped_out_player;
 	double best_delta = 0.0;
 
 	for (std::size_t i = 0u; i < picks.size(); ++i)
@@ -588,6 +593,7 @@ std::pair<std::vector<StartingPositionDescription>, bool> try_swapping_in_player
 		{
 			best_improvement = picks;
 			best_delta = change_delta;
+			swapped_out_player = backup_spd.name;
 			for (StartingPositionDescription& pick : best_improvement)
 			{
 				auto find_it = std::ranges::find(new_positions, pick.name, [](const auto& d) {return d.first; });
@@ -612,6 +618,7 @@ std::pair<std::vector<StartingPositionDescription>, bool> try_swapping_in_player
 		spd.defence.score = pdt.position_scores.find(spd.defence.position)->second;
 		spd.score = spd.defence.score + spd.offence.score;
 	}
+	std::cout << std::format("    Swapped in {} replacing {}\n", player.name, swapped_out_player);
 
 	return std::pair{ best_improvement, true };
 }
@@ -633,7 +640,7 @@ std::vector<RosterPosition> pick_team(const std::vector<Player>& roster, const P
 		has_made_change = false;
 		for (const PickTempData& trial_player : pick_data)
 		{
-			std::cout << changes_tried++ << ": trying " << trial_player.name << " as a starter\n";
+			std::cout << std::format("{}: trying {} as a starter.\n", changes_tried++, trial_player.name);
 			auto [new_starters, change_made] = try_swapping_in_player(starters, pick_data, requirements, trial_player);
 			if (change_made)
 			{
@@ -648,7 +655,6 @@ std::vector<RosterPosition> pick_team(const std::vector<Player>& roster, const P
 			}
 		}
 	}
-
 	std::vector<RosterPosition> result;
 	result.reserve(starters.size());
 	std::transform(begin(starters), end(starters), std::back_inserter(result),
@@ -658,6 +664,9 @@ std::vector<RosterPosition> pick_team(const std::vector<Player>& roster, const P
 			r.name = std::string{ spd.name };
 			r.offence = std::string{ spd.offence.position };
 			r.defence = std::string{ spd.defence.position };
+			r.offensive_score = spd.offence.score;
+			r.defensive_score = spd.defence.score;
+			r.total_score = spd.score;
 			return r;
 		});
 	return result;
@@ -691,16 +700,31 @@ int main()
 
 	std::cout << "Picking the team...\n";
 	std::vector<RosterPosition> picks = pick_team(roster, requirements);
+
 	std::cout << "\nTEAM PICKED:\n";
-	for (const RosterPosition& pick : picks)
+
+	std::ranges::sort(picks, std::greater<double>{}, [](const RosterPosition& rp) {return rp.total_score; });
+
+	std::vector<RosterPosition> output;
+	output.reserve(picks.size());
+
+	for (std::string_view pos : requirements.attacking)
 	{
-		std::cout << pick.name << " | " << pick.offence << '/' << pick.defence;
-		const Player& player = *std::ranges::find(roster, pick.name, [](const Player& p) {return p.name; });
-		for (const auto& [name, val] : player.stats)
-		{
-			//std::cout << " | " << name << '=' << val;
-		}
-		std::cout << '\n';
+		auto pick_it = std::ranges::find(picks, pos, [](const RosterPosition& rp) {return rp.offence; });
+		assert(pick_it != end(picks));
+		output.push_back(std::move(*pick_it));
+		picks.erase(pick_it);
+	}
+
+	const std::size_t max_name_len = std::ranges::max(output, {}, [](const RosterPosition& rp) {return rp.name.size(); }).name.size();
+	const std::size_t max_off_len = std::ranges::max(output, {}, [](const RosterPosition& rp) {return rp.offence.size(); }).offence.size();
+	const std::size_t max_def_len = std::ranges::max(output, {}, [](const RosterPosition& rp) {return rp.defence.size(); }).defence.size();
+	for (const RosterPosition& pick : output)
+	{
+		std::cout << std::format("{:{}} | {:{}} / {:{}}\n",
+			pick.name, max_name_len,
+			pick.offence, max_off_len,
+			pick.defence, max_def_len);
 	}
 	quit();
 }
