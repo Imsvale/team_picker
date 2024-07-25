@@ -47,11 +47,11 @@ Set calculations based on stats.
 
 If a goalkeeper has stats `Sav` and `Pos` you could set the goalkeeper's score with `GK = Sav + Pos` for example. The name of a stat can be used as a variable name and will be substituted in for the value of the stat associated with that player when evaluating that player in that position.
 
-All names of positions, stats, and functions are NOT case sensitive. `sav`, `SAV`, sAv`, etc... are all equivalent to each other.
+All names of positions, stats, and functions are NOT case sensitive. `sav`, `SAV`, `sAv`, etc... are all equivalent to each other.
 
 The following mathematical operations are supported:
 
-`+`, `-`, `*`, `/`, `(brackets)`, `^` (for exponents), `min` (with any number of arguments), `max` (with any number of arguments), `pow` (with two arguments: `pow(a,b)` is equivalent to `a^b`.
+`+`, `-`, `*`, `/`, `(brackets)`, `^` (for exponents), `min` (with any number of arguments), `max` (with any number of arguments), `pow` (with two arguments): `pow(a,b)` is equivalent to `a^b`.
 
 Values can be converted to `bool`s. Any value `abs(val)<0.5` is considered `false`, everything else is `true`. Conversely `false` converts to `0.0` and `true` converts to `1.0`.
 
@@ -61,8 +61,8 @@ The following boolean operations are supported: `&&` (and), `||` (or), `not`, `i
 
 First the `team_data.txt` file is converted to a vector of `Player` objects. Players are evaluated at each position, and their best offence and defence positions cached.
 
-The team is sorted based on the total of best offence and best defence positions. These ones are set as starters and every permutation of offensive and defensive arrangements of those players are tried to get offensive and defensive positions
+The team is sorted based on the total of best offence and best defence positions. The best players by this sort are set as starters and every permutation of offensive and defensive arrangements of those players are tried to get the offensive and defensive positions for that line up.
 
 A team is scored by adding the scores of each player in their offensive and defensive positions.
 
-Then the entire team is iterated through looking for a player who is not in the team. Then it will try swapping them in for each player, taking their offensive position. It will then find the best defensive line up again. The new team is compared to the old one. If it scores better than the old one this setup replaces the old one and the process is restarted from the beginning. This repeats until no substitution improves the team.
+Then the entire roster is iterated through looking for a player who is not in the line up. Then it will try swapping them in for each player, taking their offensive position. It will then find the best defensive line up again. The new line up is compared to the old one. If it scores better than the old one this setup replaces the old one and the process is restarted from the beginning of this paragraph. This repeats until no substitution improves the team.
