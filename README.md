@@ -51,7 +51,7 @@ All names of positions, stats, and functions are NOT case sensitive. `sav`, `SAV
 
 The following mathematical operations are supported:
 
-`+`, `-`, `*`, `/`, `(brackets)`, `^` (for exponents), `min` (with any number of arguments), `max` (with any number of arguments), `pow` (with two arguments): `pow(a,b)` is equivalent to `a^b`.
+`+`; `-`; `*`; `/`; `(brackets)`; `^` (for exponents); `min` (with any number of arguments); `max` (with any number of arguments),;`pow` (with two arguments: `pow(a,b)` is equivalent to `a^b`); `average` with any number of arguments.
 
 Values can be converted to `bool`s. Any value `abs(val)<0.5` is considered `false`, everything else is `true`. Conversely `false` converts to `0.0` and `true` converts to `1.0`.
 
