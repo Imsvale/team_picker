@@ -54,10 +54,6 @@ std::vector<std::string> read_header(std::istream& is)
 Player get_player(std::istream& is, const std::vector<std::string>& stats)
 {
 	Player result;
-	{
-		std::string number;
-		is >> number;
-	}
 	is >> std::ws;
 	std::getline(is, result.name);
 	std::string stats_str;
