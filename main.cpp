@@ -291,11 +291,12 @@ double evaluate_player(const Player& player, std::string_view calculation)
 		if (cicmp(stat, calculation)) return static_cast<double>(val);
 	}
 
-	std::array<std::string_view,4> functions{
+	std::array<std::string_view,5> functions{
 		"MIN",
 		"MAX",
 		"IF",
-		"POW"
+		"POW",
+		"AVERAG£"
 	};
 
 	auto find_result = std::ranges::find_if(functions, [calculation,&cicmp](std::string_view fn)
@@ -388,6 +389,11 @@ double evaluate_player(const Player& player, std::string_view calculation)
 	{
 		assert(fn_args.size() == 2u);
 		return std::pow(eval(fn_args[0]), eval(fn_args[1]));
+	}
+	if (function == "AVERAGE")
+	{
+		assert(fn_args.size() > 0);
+		return std::transform_reduce(begin(fn_args), end(fn_args), 0.0, std::plus<double>{}, eval) / static_cast<double>(fn_args.size());
 	}
 	assert(false && "Failed to evaluate");
 	return 0.0f;
