@@ -13,6 +13,7 @@
 #include <numeric>
 #include <array>
 #include <format>
+#include <filesystem>
 
 using IST = std::istream_iterator<std::string>;
 
@@ -28,6 +29,11 @@ std::string_view trim_whitespace(std::string_view in)
 	}
 	return in;
 }
+
+bool cicmp(std::string_view l, std::string_view r)
+{
+	return std::ranges::equal(l, r, {}, ::toupper, ::toupper);
+};
 
 struct Player
 {
@@ -281,11 +287,6 @@ double evaluate_player(const Player& player, std::string_view calculation)
 		}
 	}
 
-	auto cicmp = [](std::string_view l, std::string_view r) -> bool
-		{
-			return std::ranges::equal(l, r, {}, ::toupper, ::toupper);
-		};
-
 	for (const auto& [stat, val] : player.stats)
 	{
 		if (cicmp(stat, calculation)) return static_cast<double>(val);
@@ -299,7 +300,7 @@ double evaluate_player(const Player& player, std::string_view calculation)
 		"AVERAG£"
 	};
 
-	auto find_result = std::ranges::find_if(functions, [calculation,&cicmp](std::string_view fn)
+	auto find_result = std::ranges::find_if(functions, [calculation](std::string_view fn)
 		{
 			if (calculation.size() < fn.size()) return false;
 			std::string_view prefix = calculation.substr(0, fn.size());
@@ -674,7 +675,7 @@ std::vector<RosterPosition> pick_team(const std::vector<Player>& roster, const P
 	return result;
 }
 
-int main()
+int main(int argc, char** argv)
 {
 	auto quit = []()
 		{
@@ -682,20 +683,69 @@ int main()
 			std::cin.get();
 			exit(0);
 		};
-	std::cout << "Loading team_data.txt\n";
-	std::ifstream team_input{ "team_data.txt" };
+
+	std::cout << "Reading command line args\n";
+	std::filesystem::path team_data{ "team_data.txt" };
+	std::filesystem::path composition{ "composition.txt" };
+	{
+		enum class ArgState
+		{
+			NotFound,
+			Next,
+			Found
+		};
+		ArgState td_state = ArgState::NotFound;
+		ArgState cmp_state = ArgState::NotFound;
+		for (int i = 1; i < argc; ++i)
+		{
+			std::string_view arg{ argv[i] };
+			if (cicmp(arg, "--help") || cicmp(arg, "-help") || cicmp(arg, "help"))
+			{
+				std::cout << "Team Picker by arkadye.\n"
+					"Usage: arguments optional.\n"
+					"    --team-data [path]: a path to a team data file\n"
+					"    --composition [path]: a path to a composition file\n"
+					"For more info and latest versions visit https://github.com/arkadye/team_picker\n";
+				quit();
+			}
+			auto handle_arg = [arg, &quit](std::filesystem::path& target, ArgState& state, std::string_view match)
+				{
+					if (state == ArgState::Next)
+					{
+						target = arg;
+						state = ArgState::Next;
+						return;
+					}
+
+					if (cicmp(arg, match))
+					{
+						if (state == ArgState::Found)
+						{
+							std::cout << "Multiple " << match << " arguments found!\n";
+							quit();
+						}
+						state = ArgState::Next;
+					}
+				};
+			
+			handle_arg(team_data, td_state, "--team-data");
+			handle_arg(composition, cmp_state, "--composition");
+		}
+	}
+	std::cout << "Loading " << team_data << '\n';
+	std::ifstream team_input{ team_data };
 	if (!team_input.is_open())
 	{
-		std::cout << "Could not open team_data.txt\n";
+		std::cout << "Could not open " << team_data << '\n';
 		quit();
 	}
 	const std::vector<Player> roster = get_roster(team_input);
 
-	std::cout << "Loading composition.txt\n";
-	std::ifstream req_input{ "composition.txt" };
+	std::cout << "Loading " << composition << '\n';
+	std::ifstream req_input{ composition };
 	if (!req_input.is_open())
 	{
-		std::cout << "Could not open composition.txt\n";
+		std::cout << "Could not open " << composition << '\n';
 		quit();
 	}
 	PositionRequirements requirements = parse_position_requirements(req_input);
@@ -723,10 +773,11 @@ int main()
 	const std::size_t max_def_len = std::ranges::max(output, {}, [](const RosterPosition& rp) {return rp.defence.size(); }).defence.size();
 	for (const RosterPosition& pick : output)
 	{
-		std::cout << std::format("{:{}} | {:{}} / {:{}}\n",
-			pick.name, max_name_len,
+		std::cout << std::format("{:{}} / {:{}} - {:{}}\n",
 			pick.offence, max_off_len,
-			pick.defence, max_def_len);
+			pick.defence, max_def_len,
+			pick.name, max_name_len
+			);
 	}
 	quit();
 }
