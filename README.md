@@ -21,7 +21,23 @@ Compile and run main.cpp.
 
 The team to pick will be output to stdout.
 
-## team_data.txt
+## Inputs
+
+When run with no command line arguments the program will load team data from `team_data.txt` and composition data from `composition.txt`, both in the current working directly. This is typically the same folder as the program.
+
+From the command line it is possible to specify specific files using the command line.
+
+The command line options are:
+
+- `--help`: if this is set anywhere it will print out some help text and then exit.
+- `--team-data`: the next argument is a the path to team data.
+- `--composition`: the next argument is the path to a composition file.
+
+These can be put in any order, or omitted entirely. Valid ways to invoke from the command line include: `team_picker.exe` (with no args); `team_picker.exe --team-data sunday_league/main_squad.txt`; `team_picker.exe --composition high_offence.txt`; `team_picker.exe --team-data custom_draft.txt --composition ../high_defence.txt`; or even `team_picker.exr --composition pick_methods/all_out_attack.txt --team-data.txt thursday_league.txt`.
+
+## Team data file
+
+By default this is `team_data.txt`.
 
 The parser converts this format:
 
@@ -35,7 +51,9 @@ and so on. The first line gives a list of stats to collect. Each player is then 
 
 If you want a different format you'll have to edit/rewrite the `get_player()` function  and maybe the `read_header()` function too. 
 
-## composition.txt
+## Composition
+
+By default this is `composition.txt`.
 
 Any line beginning with `#` is a comment and will be ignored.
 
