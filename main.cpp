@@ -38,7 +38,7 @@ bool cicmp(std::string_view l, std::string_view r)
 struct Player
 {
 	std::string name;
-	std::map<std::string,int> stats;
+	std::map<std::string, int> stats;
 };
 
 std::vector<std::string> read_header(std::istream& is)
@@ -63,7 +63,7 @@ Player get_player(std::istream& is, const std::vector<std::string>& stats)
 	is >> std::ws;
 	std::getline(is, result.name);
 	std::string stats_str;
-	
+
 	std::getline(is, stats_str);
 	std::istringstream stats_data{ stats_str };
 	while (!std::isdigit(stats_data.peek()))
@@ -232,7 +232,7 @@ double evaluate_player(const Player& player, std::string_view calculation)
 	bool fully_in_brackets = true;
 	int bracket_depth = 0;
 
-	constexpr std::array<std::string_view,13> ops = {
+	constexpr std::array<std::string_view, 13> ops = {
 		"||", "&&","<<",">>","<",">","==","!=", "+", "-", "*", "/","^"
 	};
 	std::array<std::optional<std::size_t>, ops.size()> found_ops;
@@ -260,7 +260,7 @@ double evaluate_player(const Player& player, std::string_view calculation)
 
 		fully_in_brackets = false;
 		const std::string_view partial_calc = calculation.substr(cal_i);
-		for(std::size_t op_i = 0u;op_i < ops.size();++op_i)
+		for (std::size_t op_i = 0u;op_i < ops.size();++op_i)
 		{
 			if (partial_calc.size() >= ops[op_i].size() && partial_calc.starts_with(ops[op_i]))
 			{
@@ -278,7 +278,7 @@ double evaluate_player(const Player& player, std::string_view calculation)
 		calculation.remove_suffix(1);
 		return evaluate_player(player, calculation);
 	}
-	
+
 	for (std::size_t i = 0u; i < found_ops.size(); ++i)
 	{
 		if (found_ops[i].has_value())
@@ -292,7 +292,7 @@ double evaluate_player(const Player& player, std::string_view calculation)
 		if (cicmp(stat, calculation)) return static_cast<double>(val);
 	}
 
-	std::array<std::string_view,5> functions{
+	std::array<std::string_view, 5> functions{
 		"MIN",
 		"MAX",
 		"IF",
@@ -464,7 +464,7 @@ struct StartingPositionDescription
 	double score = 0.0f;
 };
 
-std::pair<std::vector<std::pair<std::string_view, PositionDescription>>,double> find_best_positions(
+std::pair<std::vector<std::pair<std::string_view, PositionDescription>>, double> find_best_positions(
 	std::vector<PickTempData>::const_iterator first,
 	std::vector<PickTempData>::const_iterator last,
 	const std::vector<std::string_view>& positions)
@@ -517,7 +517,7 @@ std::pair<std::vector<std::pair<std::string_view, PositionDescription>>, double>
 	return find_best_positions(first, last, svpos);
 }
 
-std::pair<std::vector<StartingPositionDescription>,double> get_initial_try_starters(const std::vector<PickTempData>& data, const PositionRequirements& requirements)
+std::pair<std::vector<StartingPositionDescription>, double> get_initial_try_starters(const std::vector<PickTempData>& data, const PositionRequirements& requirements)
 {
 	std::cout << "Picking initial starting line up...\n";
 	const std::size_t target_size = requirements.attacking.size();
@@ -589,7 +589,7 @@ std::pair<std::vector<StartingPositionDescription>, bool> try_swapping_in_player
 		picks[i].name = player.name;
 		picks[i].offence.score = player.position_scores.find(backup_spd.offence.position)->second;
 		const double offence_delta = picks[i].offence.score - backup_spd.offence.score;
-		auto [new_positions,new_score] = find_best_positions(begin(data_copy), end(data_copy), requirements.defensive);
+		auto [new_positions, new_score] = find_best_positions(begin(data_copy), end(data_copy), requirements.defensive);
 		const double defence_delta = new_score - old_defence_score;
 		const double change_delta = offence_delta + defence_delta;
 		if (change_delta > best_delta)
@@ -614,7 +614,7 @@ std::pair<std::vector<StartingPositionDescription>, bool> try_swapping_in_player
 	{
 		return std::pair{ picks, false };
 	}
-	
+
 	for (StartingPositionDescription& spd : best_improvement)
 	{
 		const PickTempData& pdt = get_pick_data(spd.name);
@@ -727,7 +727,7 @@ int main(int argc, char** argv)
 						state = ArgState::Next;
 					}
 				};
-			
+
 			handle_arg(team_data, td_state, "--team-data");
 			handle_arg(composition, cmp_state, "--composition");
 		}
@@ -771,13 +771,32 @@ int main(int argc, char** argv)
 	const std::size_t max_name_len = std::ranges::max(output, {}, [](const RosterPosition& rp) {return rp.name.size(); }).name.size();
 	const std::size_t max_off_len = std::ranges::max(output, {}, [](const RosterPosition& rp) {return rp.offence.size(); }).offence.size();
 	const std::size_t max_def_len = std::ranges::max(output, {}, [](const RosterPosition& rp) {return rp.defence.size(); }).defence.size();
+
+	double team_offensive_score = 0;
+	double team_defensive_score = 0;
+	double team_total_score = 0;
+
 	for (const RosterPosition& pick : output)
 	{
-		std::cout << std::format("{:{}} / {:{}} - {:{}}\n",
+		std::cout << std::format("{:{}} / {:{}} - {:{}} {:.0f} + {:.0f} = {:.0f}\n",
 			pick.offence, max_off_len,
 			pick.defence, max_def_len,
-			pick.name, max_name_len
-			);
+			pick.name, max_name_len,
+			pick.offensive_score,
+			pick.defensive_score,
+			pick.total_score
+		);
+
+		team_offensive_score += pick.offensive_score;
+		team_defensive_score += pick.defensive_score;
+		team_total_score += pick.total_score;
 	}
+
+	std::cout << std::format("\n     Team total: {:.0f} + {:.0f} = {:.0f}\n\n",
+		team_offensive_score,
+		team_defensive_score,
+		team_total_score
+	);
+
 	quit();
 }
